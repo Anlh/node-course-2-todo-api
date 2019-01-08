@@ -42,7 +42,23 @@ app.get('/api/v1/todos/:id', (req, res) => {
         }
         return res.send({ message: 'Todo found', todo });
     }).catch(err => res.status(404).send());
-})
+});
+
+// Delete route
+app.delete('/api/v1/todos/:id', (req, res) => {
+    const todoId = req.params.id;
+
+    if (!ObjectID.isValid(todoId)) {
+        return res.status(404).send({message: 'Invalid todo id'});
+    }
+
+    Todo.findByIdAndRemove(todoId).then(todo => {
+        if (!todo) {
+            return res.status(404).send({message: 'Todo not found'});
+        }
+        return res.send({ message: 'Todo removed', todo });
+    }).catch(err => res.status(404).send(err));
+});
 
 app.listen(port, () => {
     console.log(`Started on port ${port}`);
