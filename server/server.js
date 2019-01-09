@@ -57,7 +57,7 @@ app.delete('/api/v1/todos/:id', (req, res) => {
             return res.status(404).send({message: 'Todo not found'});
         }
         return res.send({ message: 'Todo removed', todo });
-    }).catch(err => res.status(404).send(err));
+    }).catch(err => res.status(400).send(err));
 });
 
 app.listen(port, () => {
