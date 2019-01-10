@@ -9,6 +9,7 @@ const { ObjectID } = require('mongodb');
 const { Todo } = require('./models/todo');
 const { User } = require('./models/user');
 
+const auth = require('./middlewares/auth');
 
 const app = express();
 const port = process.env.PORT;
@@ -98,6 +99,10 @@ app.post('/api/v1/users', (req, res) => {
             res.header('x-auth', token).send(user);
         })
         .catch(err => res.status(400).send(err));
+});
+
+app.get('/api/v1/users/me', auth, (req, res) => {
+    res.send(req.user);
 });
 
 
