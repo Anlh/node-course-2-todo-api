@@ -4,17 +4,11 @@ const { ObjectID } = require('mongodb');
 
 const { app } = require('./../server');
 const { Todo } = require('./../models/todo');
+const { User } = require('./../models/user');
+const { todosFixture, populateTodos, users, populateUsers } = require('./seed/seed');
 
-const todosFixture = [
-    { text: 'First text todo', _id: new ObjectID(), completed: false, completedAt: 333 },
-    { text: 'Second text todo', _id: new ObjectID() }
-];
-
-beforeEach((done) => {
-    Todo.remove({})
-        .then(() => Todo.insertMany(todosFixture))
-        .then(() => done());
-});
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 describe('POST /api/v1/todos', () => {
     it('should create a new todo', done => {
@@ -168,5 +162,61 @@ describe('PATCH /api/v1/todos/:id', () => {
                 expect(res.body.todo.completedAt).toNotExist();
             })
             .end(done);
+    });
+});
+
+describe('GET /api/v1/users/me', () => {
+    it('should return user if authenticated', done => {
+        const user = users[0];
+        request(app)
+            .get('/api/v1/users/me')
+            .set('x-auth', user.tokens[0].token)
+            .expect(200)
+            .end(done);
+    });
+
+    it('should return 401 if not authenticated', done => {
+        const user = users[1];
+        request(app)
+            .get('/api/v1/users/me')
+            .expect(401)
+            .end(done);
+    });
+});
+
+describe('POST /api/v1/users', () => {
+    it('Should create a user', done => {
+        const email = 'exampletest@example.com';
+        request(app)
+            .post('/api/v1/users')
+            .send({ email: email, password: 'xptooo' })
+            .expect(200)
+            .expect(res => {
+                expect(res.headers['x-auth']).toExist()
+                expect(res.body._id).toExist()
+                expect(res.body.email).toBe(email)
+            })
+            .end(err => {
+                if (err) {
+                    return done(err);
+                }
+            })
+            done()
+    });
+
+    it('should return validation errors if request invalid', done => {
+        request(app)
+            .post('/api/v1/users')
+            .expect(400)
+            .end(done)
+    });
+
+    it('Should not create user if email in use', done => {
+        const { password, email } = users[1];
+        request(app)
+            .post('/api/v1/users')
+            .send({ email, password })
+            .expect(400)
+            .end(done)
     });
 })
